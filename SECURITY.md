@@ -1,96 +1,96 @@
-# Sécurité 🔒
+# Security 🔒
 
-Ce document détaille les mesures de sécurité implémentées dans l'application Antminer Dashboard.
+This document details the security measures implemented in the Antminer Dashboard application.
 
-## 🛡️ Mesures de sécurité implémentées
+## 🛡️ Implemented Security Measures
 
-### 1. Authentification Digest HTTP
+### 1. HTTP Digest Authentication
 
-L'application utilise l'authentification **Digest** (RFC 2617) pour communiquer avec l'Antminer :
+The application uses **Digest** authentication (RFC 2617) to communicate with the Antminer:
 
-- ✅ Le mot de passe n'est **jamais** envoyé en clair
-- ✅ Utilisation de hachage MD5 avec nonce, cnonce et counter
-- ✅ Protection contre les attaques replay
-- ✅ Plus sécurisé que l'authentification Basic
+- ✅ Password is **never** sent in clear text
+- ✅ Uses MD5 hashing with nonce, cnonce, and counter
+- ✅ Protection against replay attacks
+- ✅ More secure than Basic authentication
 
-**Implémentation** : `lib/digest-auth.ts`
+**Implementation**: `lib/digest-auth.ts`
 
-### 2. Variables d'environnement sécurisées
+### 2. Secure Environment Variables
 
-Toutes les credentials sensibles sont stockées dans des variables d'environnement :
+All sensitive credentials are stored in environment variables:
 
 ```env
-ANTMINER_HOST=http://192.168.xxx.xxx
-ANTMINER_USERNAME=YOUR_USER
-ANTMINER_PASSWORD=YOUR_PASSWORD
-API_SECRET_KEY=A_RANDOM_KEY
+ANTMINER_HOST=http://192.168.1.100
+ANTMINER_USERNAME=root
+ANTMINER_PASSWORD=your_password
+API_SECRET_KEY=generated_secret_key
 ```
 
-- ✅ `.env` est dans `.gitignore` (jamais commité)
-- ✅ Séparation des secrets du code
-- ✅ Différents secrets par environnement (dev/prod)
+- ✅ `.env` is in `.gitignore` (never committed)
+- ✅ Separation of secrets from code
+- ✅ Different secrets per environment (dev/prod)
 
-### 3. Architecture sécurisée
+### 3. Secure Architecture
 
-#### API côté serveur uniquement
+#### Server-side API only
 
-Les appels à l'Antminer se font **uniquement** côté serveur via tRPC :
+Antminer API calls are made **exclusively** server-side via tRPC:
 
 ```
 Client (Browser) → tRPC → Server API → Antminer
 ```
 
-- ✅ Aucune credential n'est exposée au client
-- ✅ Impossible d'inspecter les headers d'authentification
-- ✅ Le code d'authentification ne s'exécute que sur le serveur
+- ✅ No credentials exposed to the client
+- ✅ Cannot inspect authentication headers
+- ✅ Authentication code only runs on the server
 
-#### Headers de sécurité HTTP
+#### HTTP Security Headers
 
-Le middleware Next.js (`middleware.ts`) ajoute des headers de sécurité :
+The Next.js middleware (`middleware.ts`) adds security headers:
 
 ```typescript
-// Security headers implémentés
-X-Frame-Options: SAMEORIGIN                    // Protection clickjacking
-X-Content-Type-Options: nosniff                // Protection MIME sniffing
-X-XSS-Protection: 1; mode=block                // Protection XSS
+// Security headers implemented
+X-Frame-Options: SAMEORIGIN                    // Clickjacking protection
+X-Content-Type-Options: nosniff                // MIME sniffing protection
+X-XSS-Protection: 1; mode=block                // XSS protection
 Strict-Transport-Security: max-age=63072000    // Force HTTPS
-Content-Security-Policy: ...                   // CSP strict
+Content-Security-Policy: ...                   // Strict CSP
 Referrer-Policy: strict-origin-when-cross-origin
-Permissions-Policy: ...                        // Désactive APIs inutiles
+Permissions-Policy: ...                        // Disable unnecessary APIs
 ```
 
-### 4. Type-safety avec TypeScript
+### 4. Type Safety with TypeScript
 
-- ✅ Tous les fichiers sont typés avec TypeScript
-- ✅ Validation des données avec Zod
-- ✅ tRPC fournit une sécurité de type end-to-end
-- ✅ Réduction des erreurs de runtime
+- ✅ All files are typed with TypeScript
+- ✅ Data validation with Zod
+- ✅ tRPC provides end-to-end type safety
+- ✅ Reduction of runtime errors
 
-### 5. Dépendances à jour
+### 5. Up-to-date Dependencies
 
-Le projet utilise les dernières versions stables :
+The project uses the latest stable versions:
 
 - Next.js 15+
 - React 19
 - tRPC 11+
-- Bun (runtime moderne et sécurisé)
+- Bun (modern and secure runtime)
 
-## 🚨 Recommandations de production
+## 🚨 Production Recommendations
 
-### 1. HTTPS obligatoire
+### 1. HTTPS Required
 
-**⚠️ IMPORTANT** : En production, utilisez **TOUJOURS** HTTPS.
+**⚠️ IMPORTANT**: In production, **ALWAYS** use HTTPS.
 
-#### Option A : Reverse Proxy (recommandé)
+#### Option A: Reverse Proxy (recommended)
 
-Utilisez Nginx ou Caddy comme reverse proxy :
+Use Nginx or Caddy as a reverse proxy:
 
-**Nginx example :**
+**Nginx example:**
 
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name antminer.example.com;
+    server_name antminer.yourdomain.com;
 
     ssl_certificate /path/to/cert.pem;
     ssl_certificate_key /path/to/key.pem;
@@ -106,114 +106,114 @@ server {
 }
 ```
 
-**Caddy example (encore plus simple) :**
+**Caddy example (even simpler):**
 
 ```caddy
-antminer.example.com {
+antminer.yourdomain.com {
     reverse_proxy localhost:3000
 }
 ```
 
-#### Option B : Vercel / Cloud Provider
+#### Option B: Vercel / Cloud Provider
 
-Déployez sur Vercel, Netlify, ou un autre provider qui gère HTTPS automatiquement.
+Deploy on Vercel, Netlify, or another provider that handles HTTPS automatically.
 
-### 2. Génération d'une clé secrète forte
+### 2. Generate Strong Secret Key
 
-Générez une clé secrète cryptographiquement sécurisée :
+Generate a cryptographically secure secret key:
 
 ```bash
 openssl rand -base64 32
 ```
 
-Ajoutez-la dans `.env` :
+Add it to `.env`:
 
 ```env
-API_SECRET_KEY=YOUR_RANDOM_KEY
+API_SECRET_KEY=your_generated_key_here
 ```
 
-### 3. Restriction d'accès réseau
+### 3. Network Access Restriction
 
-#### Pare-feu
+#### Firewall
 
-Limitez l'accès à l'application :
+Limit access to the application:
 
 ```bash
 # UFW example (Ubuntu)
-sudo ufw allow from 192.168.100.0/24 to any port 3000
+sudo ufw allow from 192.168.1.0/24 to any port 3000
 sudo ufw deny 3000
 ```
 
 #### VPN
 
-Pour un accès externe, utilisez un VPN (WireGuard, OpenVPN, Tailscale) plutôt que d'exposer l'app publiquement.
+For external access, use a VPN (WireGuard, OpenVPN, Tailscale) rather than exposing the app publicly.
 
-### 4. Monitoring et logs
+### 4. Monitoring and Logs
 
-Activez les logs pour surveiller les accès :
+Enable logs to monitor access:
 
 ```typescript
-// Dans server/routers/antminer.ts
+// In server/routers/antminer.ts
 console.log('[SECURITY] API access:', {
   timestamp: new Date().toISOString(),
   endpoint: 'getSystemInfo',
-  ip: request.ip, // Ajoutez le context pour obtenir l'IP
+  // Add context to get IP
 });
 ```
 
-### 5. Rate limiting
+### 5. Rate Limiting
 
-Ajoutez un rate limiter pour prévenir les abus :
+Add a rate limiter to prevent abuse:
 
 ```bash
 bun add @upstash/ratelimit @upstash/redis
 ```
 
-Ou utilisez un reverse proxy avec rate limiting (Nginx, Caddy).
+Or use a reverse proxy with rate limiting (Nginx, Caddy).
 
-### 6. Authentification utilisateur (optionnel)
+### 6. User Authentication (optional)
 
-Si vous voulez protéger l'accès au dashboard, ajoutez une authentification :
+If you want to protect dashboard access, add authentication:
 
-- **NextAuth.js** : Solution complète
-- **Authentification basique** : Simple et efficace
-- **Tailscale** : Authentification réseau
+- **NextAuth.js**: Complete solution
+- **Basic authentication**: Simple and effective
+- **Tailscale**: Network authentication
 
-## 🔍 Audit de sécurité
+## 🔍 Security Audit
 
-### Checklist avant déploiement
+### Pre-deployment checklist
 
-- [ ] `.env` contient des vraies credentials (pas les exemples)
-- [ ] `API_SECRET_KEY` est une clé aléatoire forte
-- [ ] `.env` est dans `.gitignore`
-- [ ] HTTPS est configuré (production)
-- [ ] Headers de sécurité sont actifs
-- [ ] Pare-feu est configuré
-- [ ] Les dépendances sont à jour
-- [ ] Les logs sont activés
+- [ ] `.env` contains real credentials (not examples)
+- [ ] `API_SECRET_KEY` is a strong random key
+- [ ] `.env` is in `.gitignore`
+- [ ] HTTPS is configured (production)
+- [ ] Security headers are active
+- [ ] Firewall is configured
+- [ ] Dependencies are up to date
+- [ ] Logs are enabled
 
-### Tests de sécurité
+### Security tests
 
 ```bash
-# Test des headers de sécurité
-curl -I https://votre-domaine.com
+# Test security headers
+curl -I https://yourdomain.com
 
-# Scan de vulnérabilités des dépendances
+# Scan for dependency vulnerabilities
 bun audit
 
-# Test SSL (si HTTPS)
-openssl s_client -connect votre-domaine.com:443
+# Test SSL (if HTTPS)
+openssl s_client -connect yourdomain.com:443
 ```
 
-## 🐛 Signaler une vulnérabilité
+## 🐛 Report a Vulnerability
 
-Si vous découvrez une faille de sécurité :
+If you discover a security flaw:
 
-1. **NE PAS** créer d'issue publique
-2. Contactez les mainteneurs en privé
-3. Donnez le temps de corriger avant divulgation publique
+1. **DO NOT** create a public issue
+2. Contact maintainers privately
+3. Allow time to fix before public disclosure
 
-## 📚 Références
+## 📚 References
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [RFC 2617 - HTTP Digest Authentication](https://datatracker.ietf.org/doc/html/rfc2617)
@@ -222,5 +222,4 @@ Si vous découvrez une faille de sécurité :
 
 ---
 
-**Restez vigilant et gardez votre système à jour !** 🛡️
-
+**Stay vigilant and keep your system up to date!** 🛡️

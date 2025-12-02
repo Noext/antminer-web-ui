@@ -1,119 +1,102 @@
-# 🚀 Démarrage rapide
+# 🚀 Quick Start Guide
 
-## ⚠️ Configuration immédiate requise
+## ⚠️ Required Setup
 
-### 1. Configurer les identifiants
+### 1. Configure credentials
 
-Ouvrez le fichier `.env` et remplacez les valeurs par défaut :
+Edit the `.env` file:
 
 ```bash
-# Éditez avec votre éditeur préféré
+# Use your preferred editor
 nano .env
-# ou
+# or
 vim .env
-# ou ouvrez-le dans votre IDE
+# or open it in your IDE
 ```
 
-**Remplacez :**
+**Replace the default values:**
 
 ```env
-ANTMINER_HOST=http://192.168.100.220        # ← Votre IP Antminer
-ANTMINER_USERNAME=root                       # ← Généralement 'root'
-ANTMINER_PASSWORD=your_password_here         # ← VOTRE MOT DE PASSE ICI !
+ANTMINER_HOST=http://192.168.1.100        # ← Your Antminer IP
+ANTMINER_USERNAME=root                     # ← Usually 'root'
+ANTMINER_PASSWORD=your_password_here       # ← YOUR PASSWORD HERE!
 ```
 
-### 2. Lancer l'application
+### 2. Start the application
 
 ```bash
 bun dev
 ```
 
-### 3. Ouvrir le dashboard
+### 3. Open the dashboard
 
-Ouvrez votre navigateur : [http://localhost:3000](http://localhost:3000)
+Open your browser at: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 🔍 Vérification de la connexion
+## 🔍 Connection Verification
 
-Si vous voyez une erreur 401, vérifiez :
+If you see a 401 error, check:
 
-1. ✅ Le mot de passe dans `.env` est correct
-2. ✅ L'IP de l'Antminer est accessible (testez avec `ping 192.168.100.220`)
-3. ✅ Le nom d'utilisateur est correct (généralement `root`)
-4. ✅ L'Antminer est allumé et connecté au réseau
+1. ✅ The password in `.env` is correct
+2. ✅ The Antminer IP is accessible (test with `ping <your-ip>`)
+3. ✅ The username is correct (usually `root`)
+4. ✅ The Antminer is powered on and connected to the network
 
-### Test de connectivité
+### Connectivity test
 
 ```bash
-# Test ping
-ping 192.168.100.220
+# Ping test
+ping <your-antminer-ip>
 
-# Test HTTP (devrait répondre 401)
-curl -I http://192.168.100.220/cgi-bin/get_system_info.cgi
+# HTTP test (should return 401)
+curl -I http://<your-antminer-ip>/cgi-bin/get_system_info.cgi
 ```
 
 ---
 
-## 📊 Console de debug
+## 🎯 Quick checklist
 
-Quand vous lancez `bun dev`, vous verrez des logs détaillés :
-
-```
-[DIGEST AUTH] Starting authenticated fetch to: http://...
-[DIGEST AUTH] Initial response status: 401
-[DIGEST AUTH] Parsed WWW-Authenticate: { realm: '...', nonce: '...' }
-[DIGEST AUTH] Generating auth header with params: ...
-[DIGEST AUTH] Authenticated response status: 200  ← Succès !
-```
-
-Si vous voyez `status: 401` deux fois, le mot de passe est incorrect.
+- [ ] `.env` file created
+- [ ] Antminer password configured
+- [ ] Antminer IP correct
+- [ ] Antminer accessible on network
+- [ ] Application started with `bun dev`
+- [ ] Dashboard open at http://localhost:3000
 
 ---
 
-## 🎯 Checklist rapide
-
-- [ ] Fichier `.env` créé
-- [ ] Mot de passe Antminer configuré
-- [ ] IP Antminer correcte
-- [ ] Antminer accessible sur le réseau
-- [ ] Application lancée avec `bun dev`
-- [ ] Dashboard ouvert sur http://localhost:3000
-
----
-
-## 💡 Problèmes courants
+## 💡 Common Issues
 
 ### "Error: Missing required environment variables"
 
-→ Le fichier `.env` n'existe pas ou est mal configuré
+→ The `.env` file doesn't exist or is misconfigured
 
-**Solution :** Vérifiez que le fichier existe et contient toutes les variables
+**Solution:** Check that the file exists and contains all variables
 
 ### "Error: HTTP error! status: 401"
 
-→ Identifiants incorrects
+→ Incorrect credentials
 
-**Solution :** Vérifiez le mot de passe dans `.env`
+**Solution:** Verify the password in `.env`
 
-### "ECONNREFUSED" ou "Network error"
+### "ECONNREFUSED" or "Network error"
 
-→ L'Antminer n'est pas accessible
+→ The Antminer is not accessible
 
-**Solution :** 
-- Vérifiez l'IP avec `ping`
-- Vérifiez que l'Antminer est sur le même réseau
-- Vérifiez le pare-feu
+**Solution:** 
+- Check the IP with `ping`
+- Verify the Antminer is on the same network
+- Check firewall settings
 
 ---
 
-## 🎉 Tout fonctionne ?
+## 🎉 Everything working?
 
-Vous devriez voir :
+You should see:
 
-- ✅ Statut "Connecté à l'Antminer" en vert
-- ✅ Données système affichées
-- ✅ Actualisation automatique toutes les 10 secondes
+- ✅ Status "Connected to Antminer" in green
+- ✅ System data displayed
+- ✅ Auto-refresh every 10 seconds
 
 **Enjoy your dashboard! 🚀**
-

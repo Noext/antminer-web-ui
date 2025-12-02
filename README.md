@@ -1,75 +1,77 @@
 # Antminer Dashboard 🔧⚡
 
-Dashboard moderne et sécurisé pour surveiller votre Antminer en temps réel.
+A modern and secure dashboard to monitor your Antminer in real-time.
 
-## ✨ Fonctionnalités
+## ✨ Features
 
-- 🔒 **Ultra-sécurisé** : Authentification Digest pour les appels API
-- ⚡ **Temps réel** : Actualisation automatique toutes les 10 secondes
-- 🎨 **Interface moderne** : Design élégant avec Tailwind CSS
-- 🚀 **Performance** : Construit avec Next.js 15, Bun et tRPC
-- 📊 **Visualisation complète** : Affichage des données système de l'Antminer
+- 🔒 **Ultra-secure**: Digest authentication for API calls
+- ⚡ **Real-time**: Auto-refresh every 10 seconds
+- 🎨 **Modern UI**: Beautiful design with Tailwind CSS
+- 🚀 **High Performance**: Built with Next.js 15, Bun, and tRPC
+- 📊 **Complete Visualization**: Display all Antminer system data
+- 📈 **Interactive Charts**: 6-hour hashrate history with Recharts
 
-## 🔧 Technologies utilisées
+## 🔧 Tech Stack
 
-- **Next.js 15** : Framework React avec App Router
-- **Bun** : Runtime JavaScript ultra-rapide
-- **tRPC** : API type-safe
-- **Tailwind CSS** : Framework CSS utility-first
-- **TypeScript** : Typage statique
-- **React Query** : Gestion d'état et cache
-- **Lucide React** : Icônes modernes
+- **Next.js 15**: React framework with App Router
+- **Bun**: Ultra-fast JavaScript runtime
+- **tRPC**: Type-safe API
+- **Tailwind CSS**: Utility-first CSS framework
+- **TypeScript**: Static typing
+- **React Query**: State management and caching
+- **Recharts**: Modern charting library
 
 ## 🚀 Installation
 
-1. **Cloner le projet** (si ce n'est pas déjà fait)
+### 1. Clone the repository
 
 ```bash
-cd /root/Dev/noext/antminer
+git clone <your-repo-url>
+cd antminer-dashboard
 ```
 
-2. **Installer les dépendances**
+### 2. Install dependencies
 
 ```bash
 bun install
 ```
 
-3. **Configurer les variables d'environnement**
+### 3. Configure environment variables
 
-Créez un fichier `.env` à la racine du projet :
+Create a `.env` file in the project root:
 
 ```env
 # Antminer API Configuration
-ANTMINER_HOST=http://192.168.xxx.xxx
-ANTMINER_USERNAME=YOUR_USER
-ANTMINER_PASSWORD=YOUR_PASSWORD
+ANTMINER_HOST=http://192.168.1.100
+ANTMINER_USERNAME=root
+ANTMINER_PASSWORD=your_password_here
 
 # Security - Change this to a random string in production
 # Generate with: openssl rand -base64 32
 API_SECRET_KEY=change_this_to_a_random_secret_key_in_production
 ```
 
-⚠️ **IMPORTANT** : Remplacez `votre_mot_de_passe_ici` par le vrai mot de passe de votre Antminer.
+⚠️ **IMPORTANT**: Replace the values with your actual Antminer credentials.
 
-4. **Générer une clé secrète sécurisée**
+### 4. Generate a secure secret key
 
 ```bash
 openssl rand -base64 32
 ```
 
-Copiez le résultat dans `API_SECRET_KEY` dans votre `.env`.
+Copy the result into `API_SECRET_KEY` in your `.env` file.
 
-## 🏃 Lancer le projet
+## 🏃 Running the Application
 
-### Mode développement
+### Development mode
 
 ```bash
 bun dev
 ```
 
-Le dashboard sera accessible sur [http://localhost:3000](http://localhost:3000)
+The dashboard will be available at [http://localhost:3000](http://localhost:3000)
 
-### Mode production
+### Production mode
 
 ```bash
 # Build
@@ -79,94 +81,143 @@ bun run build
 bun start
 ```
 
-## 🔒 Sécurité
+## 🔒 Security
 
-Ce projet implémente plusieurs couches de sécurité :
+This project implements multiple security layers:
 
-### 1. Authentification Digest
-- Utilise l'authentification Digest HTTP (plus sécurisée que Basic Auth)
-- Le mot de passe n'est jamais envoyé en clair
-- Protection contre les attaques replay
+### 1. Digest Authentication
+- Uses HTTP Digest authentication (more secure than Basic Auth)
+- Password is never sent in clear text
+- Protection against replay attacks
 
-### 2. Variables d'environnement
-- Toutes les credentials sont stockées dans `.env`
-- Le fichier `.env` est ignoré par Git (ne sera jamais commité)
-- Utilisez `.env.example` comme template
+### 2. Environment Variables
+- All credentials stored in `.env`
+- `.env` file is ignored by Git (never committed)
+- Use `.env.example` as a template
 
-### 3. API sécurisée côté serveur
-- Les appels à l'Antminer se font **uniquement** côté serveur
-- Jamais d'exposition des credentials au client
-- tRPC fournit une couche type-safe
+### 3. Server-side API Security
+- Antminer API calls are made **exclusively** server-side
+- Credentials never exposed to the client
+- tRPC provides type-safe layer
 
-### 4. Bonnes pratiques
-- **NE JAMAIS** commiter le fichier `.env`
-- **NE JAMAIS** exposer vos credentials
-- Changez la clé `API_SECRET_KEY` en production
-- Utilisez HTTPS en production (reverse proxy comme Nginx)
+### 4. Best Practices
+- **NEVER** commit the `.env` file
+- **NEVER** expose your credentials
+- Change the `API_SECRET_KEY` in production
+- Use HTTPS in production (reverse proxy like Nginx)
 
-## 📁 Structure du projet
+## 📁 Project Structure
 
 ```
-antminer/
-├── app/                      # Next.js App Router
+antminer-dashboard/
+├── app/                          # Next.js App Router
 │   ├── api/
-│   │   └── trpc/            # tRPC API endpoints
-│   ├── layout.tsx           # Layout principal
-│   ├── page.tsx             # Page dashboard
-│   └── providers.tsx        # React Query & tRPC providers
-├── lib/                     # Librairies utilitaires
-│   ├── antminer-client.ts   # Client API Antminer
-│   ├── digest-auth.ts       # Authentification Digest
-│   ├── trpc.ts              # Configuration tRPC serveur
-│   └── trpc-client.ts       # Configuration tRPC client
+│   │   └── trpc/                # tRPC API endpoints
+│   ├── components/              # React components
+│   ├── layout.tsx               # Main layout
+│   ├── page.tsx                 # Dashboard page
+│   └── providers.tsx            # React Query & tRPC providers
+├── lib/                         # Utility libraries
+│   ├── antminer-client.ts       # Antminer API client
+│   ├── digest-auth.ts           # Digest authentication
+│   ├── trpc.ts                  # tRPC server configuration
+│   └── trpc-client.ts           # tRPC client configuration
 ├── server/
-│   └── routers/             # Routes tRPC
-│       ├── _app.ts          # Router principal
-│       └── antminer.ts      # Endpoints Antminer
-├── .env                     # Variables d'environnement (à créer)
+│   └── routers/                 # tRPC routes
+│       ├── _app.ts              # Main router
+│       └── antminer.ts          # Antminer endpoints
+├── .env                         # Environment variables (create this)
+├── .env.example                 # Environment template
 └── README.md
 ```
 
-## 🎨 Personnalisation
+## 🎨 Customization
 
-### Changer l'intervalle de rafraîchissement
+### Change refresh interval
 
-Dans `app/page.tsx`, modifiez la valeur `refetchInterval` :
+In `app/page.tsx`, modify the `refetchInterval` value:
 
 ```typescript
 const { data: systemInfo } = trpc.antminer.getSystemInfo.useQuery(
   undefined,
   {
-    refetchInterval: 10000, // 10 secondes (en millisecondes)
+    refetchInterval: 10000, // 10 seconds (in milliseconds)
   }
 );
 ```
 
-### Ajouter de nouveaux endpoints
+### Add new endpoints
 
-1. Ajoutez une méthode dans `lib/antminer-client.ts`
-2. Créez un nouveau endpoint dans `server/routers/antminer.ts`
-3. Utilisez-le dans vos composants avec `trpc.antminer.yourEndpoint.useQuery()`
+1. Add a method in `lib/antminer-client.ts`
+2. Create a new endpoint in `server/routers/antminer.ts`
+3. Use it in your components with `trpc.antminer.yourEndpoint.useQuery()`
 
-## 🐛 Dépannage
+## 📊 API Endpoints Implemented
 
-### Erreur "Missing required environment variables"
-- Vérifiez que le fichier `.env` existe
-- Vérifiez que toutes les variables sont définies
+| Endpoint | Data | Refresh | Usage |
+|----------|------|---------|-------|
+| `system_info.cgi` | System info, network, firmware | 10s | General information |
+| `stats.cgi` | Hashrate, temps, fans, hashboards | 10s | Real-time stats |
+| `chart.cgi` | 6-hour hashrate history | 30s | Chart |
+| `pools.cgi` | Pools, shares, difficulty | 15s | Mining pools |
+| `summary.cgi` | Health, uptime, status | 10s | System health |
 
-### Erreur de connexion à l'Antminer
-- Vérifiez que l'IP de l'Antminer est correcte
-- Vérifiez que l'Antminer est accessible sur le réseau
-- Vérifiez le nom d'utilisateur et le mot de passe
+## 🐛 Troubleshooting
 
-### Le dashboard ne se rafraîchit pas
-- Vérifiez que `refetchInterval` est défini
-- Ouvrez la console du navigateur pour voir les erreurs
+### Error "Missing required environment variables"
+
+→ The `.env` file doesn't exist or is misconfigured
+
+**Solution**: Make sure the file exists and contains all variables
+
+### Error "HTTP error! status: 401"
+
+→ Incorrect credentials
+
+**Solution**: Check the password in `.env`
+
+### Error "ECONNREFUSED" or "Network error"
+
+→ The Antminer is not accessible
+
+**Solution**: 
+- Check the IP with `ping`
+- Make sure the Antminer is on the same network
+- Check firewall settings
+
+## 🌐 Deploying to Production
+
+### Using a reverse proxy (Nginx)
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name antminer.yourdomain.com;
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### Using Vercel/Cloud
+
+Deploy on Vercel, Netlify, or another provider that handles HTTPS automatically.
+
+**Note**: Make sure to set environment variables in your deployment platform.
 
 ## 📝 License
 
 MIT
 
-## 🙏 Crédits
+## 🙏 Credits
 
-Dashboard créé avec Next.js, tRPC, Tailwind CSS et beaucoup de ❤️
+Dashboard created with Next.js, tRPC, Tailwind CSS, and lots of ❤️
