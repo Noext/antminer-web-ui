@@ -2,6 +2,8 @@
 
 A modern and secure dashboard to monitor your Antminer in real-time.
 
+![Antminer Dashboard](dashboard.png)
+
 ## ✨ Features
 
 - 🔒 **Ultra-secure**: Digest authentication for API calls
