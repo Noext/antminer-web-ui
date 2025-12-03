@@ -4,6 +4,15 @@ A modern and secure dashboard to monitor your Antminer in real-time.
 
 ![Antminer Dashboard](dashboard.png)
 
+## ⚠️ Important Network Requirement
+
+**This application must run on the same local network as your Antminer.**
+
+The Next.js server needs direct network access to your Antminer. Deploy options:
+- ✅ **Local deployment**: Run on your local machine or Raspberry Pi on the same network
+- ✅ **VPN access**: Use Tailscale/WireGuard to connect to your local network remotely
+- ❌ **Cloud deployment** (Vercel, etc.): Won't work unless connected via VPN to your local network
+
 ## ✨ Features
 
 - 🔒 **Ultra-secure**: Digest authentication for API calls
@@ -180,16 +189,55 @@ const { data: systemInfo } = trpc.antminer.getSystemInfo.useQuery(
 
 ### Error "ECONNREFUSED" or "Network error"
 
-→ The Antminer is not accessible
+→ The Antminer is not accessible from the server
 
 **Solution**: 
-- Check the IP with `ping`
-- Make sure the Antminer is on the same network
-- Check firewall settings
+- **Verify network**: Make sure the Next.js server is on the same network as the Antminer
+- Check the IP with `ping <antminer-ip>` from the server
+- Check firewall settings on both server and Antminer
+- If deployed remotely: Set up VPN (Tailscale) to connect to your local network
 
-## 🌐 Deploying to Production
+## 🌐 Deployment Options
 
-### Using a reverse proxy (Nginx)
+### ⚠️ Network Requirements
+
+**Critical**: The server running this application must be able to reach your Antminer on the local network.
+
+### Recommended Deployment Scenarios
+
+#### 1. Local Network Deployment (Recommended)
+
+Deploy on a device on the same network as your Antminer:
+
+**Raspberry Pi / Mini PC:**
+```bash
+# On your local server
+git clone <your-repo>
+cd antminer-dashboard
+bun install
+bun build
+bun start
+```
+
+Access via: `http://<local-server-ip>:3000`
+
+#### 2. Remote Access via VPN
+
+If you need remote access:
+
+**Option A: Tailscale (Easiest)**
+```bash
+# Install Tailscale on both your server and devices
+curl -fsSL https://tailscale.com/install.sh | sh
+tailscale up
+```
+
+**Option B: WireGuard**
+Set up WireGuard VPN to connect to your home network.
+
+#### 3. Reverse Proxy (for HTTPS on local network)
+
+### Using Nginx
 
 ```nginx
 server {
@@ -210,11 +258,13 @@ server {
 }
 ```
 
-### Using Vercel/Cloud
+### ❌ Cloud Deployment (Not Recommended)
 
-Deploy on Vercel, Netlify, or another provider that handles HTTPS automatically.
+**Important**: Deploying to Vercel, Netlify, or other cloud providers will **NOT work** unless you:
+1. Set up a VPN (Tailscale/WireGuard) to connect the cloud server to your local network
+2. Configure the VPN on the deployment platform (complex)
 
-**Note**: Make sure to set environment variables in your deployment platform.
+**For most users**: Local deployment or VPN-connected deployment is recommended.
 
 ## 📝 License
 

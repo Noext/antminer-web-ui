@@ -1,5 +1,16 @@
 # 🚀 Quick Start Guide
 
+## ⚠️ Network Requirement
+
+**This application must run on the same local network as your Antminer.**
+
+Make sure:
+- Your Antminer is accessible on your local network
+- The server running this application can ping the Antminer
+- Both are on the same subnet (e.g., 192.168.1.x)
+
+For remote access, use a VPN like Tailscale.
+
 ## ⚠️ Required Setup
 
 ### 1. Configure credentials
