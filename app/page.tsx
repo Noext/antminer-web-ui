@@ -4,6 +4,7 @@ import { trpc } from '@/lib/trpc-client';
 import { RefreshCw, Activity, Zap, Thermometer, Clock, AlertCircle, TrendingUp, Waves, CheckCircle, Wifi, Wind } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { HashrateChart } from './components/HashrateChart';
+import { NotificationManager } from './components/NotificationManager';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -114,6 +115,8 @@ export default function Home() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <NotificationManager />
+
         {/* Status Banner */}
         <div className="mb-8">
           {error && (
