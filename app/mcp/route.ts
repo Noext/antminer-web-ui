@@ -41,6 +41,17 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse(null, { code: -32700, message: 'Parse error' });
   }
 
+  if (
+    body !== null
+    && typeof body === 'object'
+    && !Array.isArray(body)
+    && (body as Record<string, unknown>).jsonrpc === '2.0'
+    && typeof (body as Record<string, unknown>).method === 'string'
+    && (body as Record<string, unknown>).id === undefined
+  ) {
+    return new Response(null, { status: 202 });
+  }
+
   const validated = validateMcpRequest(request, body);
   return validated instanceof Response ? validated : handleMcpRequest(validated);
 }

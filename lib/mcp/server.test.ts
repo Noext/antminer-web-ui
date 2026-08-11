@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { handleMcpRequest, MCP_PROTOCOL_VERSION, validateMcpRequest } from './server';
+import {
+  handleMcpRequest,
+  LEGACY_MCP_PROTOCOL_VERSION,
+  MCP_PROTOCOL_VERSION,
+  validateMcpRequest,
+} from './server';
 
 const clientMeta = {
   'io.modelcontextprotocol/protocolVersion': MCP_PROTOCOL_VERSION,
@@ -39,7 +44,10 @@ describe('MCP 2026-07-28 server', () => {
     const response = await handleMcpRequest(validated as never);
     const payload = await response.json();
 
-    expect(payload.result.supportedVersions).toEqual([MCP_PROTOCOL_VERSION]);
+    expect(payload.result.supportedVersions).toEqual([
+      MCP_PROTOCOL_VERSION,
+      LEGACY_MCP_PROTOCOL_VERSION,
+    ]);
     expect(payload.result.capabilities.extensions['io.modelcontextprotocol/ui'].mimeTypes)
       .toContain('text/html;profile=mcp-app');
   });
@@ -76,5 +84,60 @@ describe('MCP 2026-07-28 server', () => {
     expect(validated).toBeInstanceOf(Response);
     const payload = await (validated as Response).json();
     expect(payload.error.code).toBe(-32020);
+  });
+});
+
+describe('legacy MCP compatibility for Codex', () => {
+  test('initializes a 2025-11-25 client', async () => {
+    const legacyRequest = new Request('http://localhost/mcp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+    });
+    const legacyBody = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: {
+        protocolVersion: LEGACY_MCP_PROTOCOL_VERSION,
+        capabilities: {},
+        clientInfo: { name: 'codex', version: '0.146.0' },
+      },
+    };
+    const validated = validateMcpRequest(legacyRequest, legacyBody);
+
+    expect(validated).not.toBeInstanceOf(Response);
+    const response = await handleMcpRequest(validated as never);
+    const payload = await response.json();
+    expect(payload.result.protocolVersion).toBe(LEGACY_MCP_PROTOCOL_VERSION);
+    expect(payload.result.capabilities.tools).toEqual({});
+  });
+
+  test('returns legacy tool lists without modern result metadata', async () => {
+    const legacyRequest = new Request('http://localhost/mcp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+        'MCP-Protocol-Version': LEGACY_MCP_PROTOCOL_VERSION,
+      },
+    });
+    const legacyBody = {
+      jsonrpc: '2.0',
+      id: 2,
+      method: 'tools/list',
+      params: {},
+    };
+    const validated = validateMcpRequest(legacyRequest, legacyBody);
+    const response = await handleMcpRequest(validated as never);
+    const payload = await response.json();
+
+    expect(payload.result.resultType).toBeUndefined();
+    expect(payload.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
+      'get_miner_live_info',
+      'show_miner_graphs',
+    ]);
   });
 });

@@ -6,6 +6,7 @@ import {
 } from './miner-graphs-app';
 
 export const MCP_PROTOCOL_VERSION = '2026-07-28';
+export const LEGACY_MCP_PROTOCOL_VERSION = '2025-11-25';
 
 type RequestId = string | number;
 type JsonObject = Record<string, unknown>;
@@ -15,6 +16,7 @@ interface JsonRpcRequest {
   id: RequestId;
   method: string;
   params: JsonObject;
+  era: 'modern' | 'legacy';
 }
 
 interface McpError {
@@ -57,6 +59,8 @@ function requestMeta(request: JsonRpcRequest): JsonObject | null {
 }
 
 function supportsMcpApps(request: JsonRpcRequest): boolean {
+  if (request.era === 'legacy') return true;
+
   const meta = requestMeta(request);
   const capabilities = asObject(meta?.['io.modelcontextprotocol/clientCapabilities']);
   const extensions = asObject(capabilities?.extensions);
@@ -106,13 +110,23 @@ function result(id: RequestId, value: unknown): Response {
   return Response.json({ jsonrpc: '2.0', id, result: value });
 }
 
+function protocolResult(request: JsonRpcRequest, value: JsonObject): Response {
+  if (request.era === 'modern') return result(request.id, value);
+
+  const legacyValue = { ...value };
+  delete legacyValue.resultType;
+  delete legacyValue.ttlMs;
+  delete legacyValue.cacheScope;
+  return result(request.id, legacyValue);
+}
+
 export function errorResponse(id: RequestId | null, error: McpError, status = 400): Response {
   return Response.json({ jsonrpc: '2.0', id, error }, { status });
 }
 
 export function validateMcpRequest(request: Request, body: unknown): JsonRpcRequest | Response {
   const parsed = asObject(body);
-  const params = asObject(parsed?.params);
+  const params = parsed?.params === undefined ? {} : asObject(parsed.params);
   const id = typeof parsed?.id === 'string' || typeof parsed?.id === 'number' ? parsed.id : null;
 
   if (parsed?.jsonrpc !== '2.0' || id === null || typeof parsed.method !== 'string' || !params) {
@@ -124,6 +138,7 @@ export function validateMcpRequest(request: Request, body: unknown): JsonRpcRequ
     id,
     method: parsed.method,
     params,
+    era: 'modern',
   };
   const meta = requestMeta(rpcRequest);
   const bodyVersion = meta?.['io.modelcontextprotocol/protocolVersion'];
@@ -131,6 +146,25 @@ export function validateMcpRequest(request: Request, body: unknown): JsonRpcRequ
   const clientCapabilities = asObject(meta?.['io.modelcontextprotocol/clientCapabilities']);
   const headerVersion = request.headers.get('MCP-Protocol-Version');
   const headerMethod = request.headers.get('Mcp-Method');
+  const legacyVersion = rpcRequest.method === 'initialize'
+    ? rpcRequest.params.protocolVersion
+    : headerVersion;
+
+  if (
+    rpcRequest.method === 'initialize'
+    || legacyVersion === LEGACY_MCP_PROTOCOL_VERSION
+    || bodyVersion === undefined
+  ) {
+    if (rpcRequest.method === 'initialize' && legacyVersion !== LEGACY_MCP_PROTOCOL_VERSION) {
+      return errorResponse(id, {
+        code: -32602,
+        message: 'Unsupported legacy protocol version',
+        data: { supportedVersions: [MCP_PROTOCOL_VERSION, LEGACY_MCP_PROTOCOL_VERSION] },
+      });
+    }
+    rpcRequest.era = 'legacy';
+    return rpcRequest;
+  }
 
   if (headerVersion !== bodyVersion || headerMethod !== rpcRequest.method) {
     return errorResponse(id, { code: -32020, message: 'Header mismatch: MCP transport headers do not match the JSON-RPC body' });
@@ -141,7 +175,10 @@ export function validateMcpRequest(request: Request, body: unknown): JsonRpcRequ
       {
         code: -32022,
         message: 'Unsupported protocol version',
-        data: { supportedVersions: [MCP_PROTOCOL_VERSION], requestedVersion: bodyVersion ?? null },
+        data: {
+          supportedVersions: [MCP_PROTOCOL_VERSION, LEGACY_MCP_PROTOCOL_VERSION],
+          requestedVersion: bodyVersion ?? null,
+        },
       },
     );
   }
@@ -161,10 +198,30 @@ export function validateMcpRequest(request: Request, body: unknown): JsonRpcRequ
 
 export async function handleMcpRequest(request: JsonRpcRequest): Promise<Response> {
   switch (request.method) {
+    case 'initialize':
+      return result(request.id, {
+        protocolVersion: LEGACY_MCP_PROTOCOL_VERSION,
+        capabilities: {
+          tools: {},
+          resources: {},
+          extensions: {
+            'io.modelcontextprotocol/ui': { mimeTypes: [MCP_APP_MIME_TYPE] },
+          },
+        },
+        serverInfo: {
+          name: 'antminer-web-ui',
+          version: '1.1.0',
+        },
+        instructions: 'Use get_miner_live_info for concise live telemetry and show_miner_graphs when visual history is useful. Both tools are read-only.',
+      });
+
+    case 'ping':
+      return result(request.id, {});
+
     case 'server/discover':
       return result(request.id, {
         resultType: 'complete',
-        supportedVersions: [MCP_PROTOCOL_VERSION],
+        supportedVersions: [MCP_PROTOCOL_VERSION, LEGACY_MCP_PROTOCOL_VERSION],
         capabilities: {
           tools: {},
           resources: {},
@@ -175,7 +232,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<Respons
         _meta: {
           'io.modelcontextprotocol/serverInfo': {
             name: 'antminer-web-ui',
-            version: '1.0.0',
+            version: '1.1.0',
           },
         },
         instructions: 'Use get_miner_live_info for concise live telemetry and show_miner_graphs when visual history is useful. Both tools are read-only.',
@@ -184,7 +241,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<Respons
       });
 
     case 'tools/list':
-      return result(request.id, {
+      return protocolResult(request, {
         resultType: 'complete',
         tools: tools(supportsMcpApps(request)),
         ttlMs: 300_000,
@@ -192,7 +249,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<Respons
       });
 
     case 'resources/list':
-      return result(request.id, {
+      return protocolResult(request, {
         resultType: 'complete',
         resources: supportsMcpApps(request)
           ? [{
@@ -211,7 +268,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<Respons
       if (request.params.uri !== MINER_GRAPHS_RESOURCE_URI) {
         return errorResponse(request.id, { code: -32002, message: 'Resource not found' }, 404);
       }
-      return result(request.id, {
+      return protocolResult(request, {
         resultType: 'complete',
         contents: [{
           uri: MINER_GRAPHS_RESOURCE_URI,
@@ -243,7 +300,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<Respons
         const data = name === 'get_miner_live_info'
           ? await getMinerLiveInfo()
           : await getMinerGraphData();
-        return result(request.id, {
+        return protocolResult(request, {
           resultType: 'complete',
           content: [{ type: 'text', text: formatMinerSummary(data) }],
           structuredContent: data,
@@ -251,7 +308,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<Respons
         });
       } catch (error) {
         console.error('[MCP] Antminer tool failed:', error);
-        return result(request.id, {
+        return protocolResult(request, {
           resultType: 'complete',
           content: [{ type: 'text', text: 'Impossible de récupérer les données du mineur pour le moment.' }],
           isError: true,
