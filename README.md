@@ -21,6 +21,7 @@ The Next.js server needs direct network access to your Antminer. Deploy options:
 - 🚀 **High Performance**: Built with Next.js 15, Bun, and tRPC
 - 📊 **Complete Visualization**: Display all Antminer system data
 - 📈 **Interactive Charts**: 6-hour hashrate history with Recharts
+- 🔔 **Native Android alerts**: installable PWA with Web Push notifications for outages and recoveries
 
 ## 🔧 Tech Stack
 
@@ -63,6 +64,16 @@ API_SECRET_KEY=change_this_to_a_random_secret_key_in_production
 
 # Optional MCP endpoint protection
 MCP_API_KEY=change_this_to_a_random_secret_key
+
+# Optional outage monitoring and Android Web Push notifications
+MINER_MONITOR_ENABLED=true
+MINER_MONITOR_INTERVAL_MS=30000
+MINER_MONITOR_FAILURE_THRESHOLD=3
+ANTMINER_REQUEST_TIMEOUT_MS=10000
+PUSH_DATA_DIR=/var/lib/antminer-ui
+VAPID_SUBJECT=https://github.com/Noext/antminer-web-ui
+VAPID_PUBLIC_KEY=generated_public_key
+VAPID_PRIVATE_KEY=generated_private_key
 ```
 
 ⚠️ **IMPORTANT**: Replace the values with your actual Antminer credentials.
@@ -74,6 +85,14 @@ openssl rand -base64 32
 ```
 
 Copy the result into `API_SECRET_KEY` in your `.env` file.
+
+Generate the VAPID key pair used by Web Push with:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Web Push requires a secure context. Expose the dashboard through HTTPS (for example with Tailscale Serve), open it on Android, then tap **Activer les alertes**. The browser registers the device and immediately sends a confirmation notification. The server checks the miner every 30 seconds and declares it offline after three consecutive failures; it also notifies when the miner comes back online.
 
 ## 🏃 Running the Application
 
@@ -134,6 +153,8 @@ antminer-dashboard/
 ├── lib/                         # Utility libraries
 │   ├── antminer-client.ts       # Antminer API client
 │   ├── digest-auth.ts           # Digest authentication
+│   ├── monitor/                 # Persistent outage monitoring
+│   ├── push/                    # Web Push subscriptions and delivery
 │   ├── trpc.ts                  # tRPC server configuration
 │   └── trpc-client.ts           # tRPC client configuration
 ├── server/

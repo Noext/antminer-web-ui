@@ -115,9 +115,15 @@ export async function authenticatedFetch(
   password: string,
   options: RequestInit = {}
 ): Promise<Response> {
+  const timeout = Number(process.env.ANTMINER_REQUEST_TIMEOUT_MS || 10_000);
+  const requestOptions: RequestInit = {
+    ...options,
+    signal: options.signal || AbortSignal.timeout(Number.isFinite(timeout) && timeout > 0 ? timeout : 10_000),
+  };
+
   // First request to get the authentication challenge
   const initialResponse = await fetch(url, {
-    ...options,
+    ...requestOptions,
     headers: {
       ...options.headers,
     },
@@ -148,7 +154,7 @@ export async function authenticatedFetch(
 
     // Retry request with authentication
     return fetch(url, {
-      ...options,
+      ...requestOptions,
       headers: {
         ...options.headers,
         Authorization: authHeader,
@@ -158,4 +164,3 @@ export async function authenticatedFetch(
 
   return initialResponse;
 }
-

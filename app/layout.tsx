@@ -15,7 +15,21 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Antminer Dashboard",
-  description: "Monitor your Antminer in real-time",
+  description: "Surveillance en temps réel de votre Antminer",
+  manifest: "/manifest.webmanifest",
+  applicationName: "Antminer Dashboard",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Antminer",
+  },
+  icons: {
+    icon: "/antminer-icon.svg",
+  },
+};
+
+export const viewport = {
+  themeColor: "#06b6d4",
 };
 
 export default function RootLayout({
@@ -24,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
