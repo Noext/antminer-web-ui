@@ -24,7 +24,7 @@ The Next.js server needs direct network access to your Antminer. Deploy options:
 
 ## 🔧 Tech Stack
 
-- **Next.js 15**: React framework with App Router
+- **Next.js 16**: React framework with App Router
 - **Bun**: Ultra-fast JavaScript runtime
 - **tRPC**: Type-safe API
 - **Tailwind CSS**: Utility-first CSS framework
@@ -60,6 +60,9 @@ ANTMINER_PASSWORD=your_password_here
 # Security - Change this to a random string in production
 # Generate with: openssl rand -base64 32
 API_SECRET_KEY=change_this_to_a_random_secret_key_in_production
+
+# Optional MCP endpoint protection
+MCP_API_KEY=change_this_to_a_random_secret_key
 ```
 
 ⚠️ **IMPORTANT**: Replace the values with your actual Antminer credentials.
@@ -172,6 +175,22 @@ const { data: systemInfo } = trpc.antminer.getSystemInfo.useQuery(
 | `chart.cgi` | 6-hour hashrate history | 30s | Chart |
 | `pools.cgi` | Pools, shares, difficulty | 15s | Mining pools |
 | `summary.cgi` | Health, uptime, status | 10s | System health |
+
+## 🤖 MCP server and MCP App
+
+The dashboard exposes a stateless Streamable HTTP endpoint at `POST /mcp`, implemented against MCP `2026-07-28`.
+
+- `get_miner_live_info`: read-only live telemetry with both text and structured JSON.
+- `show_miner_graphs`: the same live telemetry plus hashrate history. Hosts supporting the `io.modelcontextprotocol/ui` extension render an MCP App with hashrate, temperature and fan graphs.
+- UI resource: `ui://antminer/miner-graphs.html` with MIME type `text/html;profile=mcp-app`.
+
+The graph tool keeps a meaningful text fallback for hosts without MCP Apps support. Antminer credentials remain server-side and are never included in tool or resource responses. Set `MCP_API_KEY` to require a bearer token, and `MCP_ALLOWED_ORIGINS` to allow specific browser origins in addition to the server's own origin.
+
+Example server URL:
+
+```text
+http://your-dashboard-host:3000/mcp
+```
 
 ## 🐛 Troubleshooting
 
