@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   handleMcpRequest,
   LEGACY_MCP_PROTOCOL_VERSION,
+  LEGACY_MCP_PROTOCOL_VERSIONS,
   MCP_PROTOCOL_VERSION,
   validateMcpRequest,
 } from './server';
@@ -46,7 +47,7 @@ describe('MCP 2026-07-28 server', () => {
 
     expect(payload.result.supportedVersions).toEqual([
       MCP_PROTOCOL_VERSION,
-      LEGACY_MCP_PROTOCOL_VERSION,
+      ...LEGACY_MCP_PROTOCOL_VERSIONS,
     ]);
     expect(payload.result.capabilities.extensions['io.modelcontextprotocol/ui'].mimeTypes)
       .toContain('text/html;profile=mcp-app');
@@ -139,5 +140,30 @@ describe('legacy MCP compatibility for Codex', () => {
       'get_miner_live_info',
       'show_miner_graphs',
     ]);
+  });
+
+  test('echoes the historical protocol version requested by Codex', async () => {
+    const requestedVersion = '2025-06-18';
+    const legacyRequest = new Request('http://localhost/mcp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+    });
+    const validated = validateMcpRequest(legacyRequest, {
+      jsonrpc: '2.0',
+      id: 3,
+      method: 'initialize',
+      params: {
+        protocolVersion: requestedVersion,
+        capabilities: {},
+        clientInfo: { name: 'codex', version: '0.146.0' },
+      },
+    });
+    const response = await handleMcpRequest(validated as never);
+    const payload = await response.json();
+
+    expect(payload.result.protocolVersion).toBe(requestedVersion);
   });
 });

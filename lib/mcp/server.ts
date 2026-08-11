@@ -7,6 +7,11 @@ import {
 
 export const MCP_PROTOCOL_VERSION = '2026-07-28';
 export const LEGACY_MCP_PROTOCOL_VERSION = '2025-11-25';
+export const LEGACY_MCP_PROTOCOL_VERSIONS = [
+  '2025-03-26',
+  '2025-06-18',
+  LEGACY_MCP_PROTOCOL_VERSION,
+] as const;
 
 type RequestId = string | number;
 type JsonObject = Record<string, unknown>;
@@ -17,6 +22,7 @@ interface JsonRpcRequest {
   method: string;
   params: JsonObject;
   era: 'modern' | 'legacy';
+  protocolVersion: string;
 }
 
 interface McpError {
@@ -139,6 +145,7 @@ export function validateMcpRequest(request: Request, body: unknown): JsonRpcRequ
     method: parsed.method,
     params,
     era: 'modern',
+    protocolVersion: MCP_PROTOCOL_VERSION,
   };
   const meta = requestMeta(rpcRequest);
   const bodyVersion = meta?.['io.modelcontextprotocol/protocolVersion'];
@@ -150,19 +157,24 @@ export function validateMcpRequest(request: Request, body: unknown): JsonRpcRequ
     ? rpcRequest.params.protocolVersion
     : headerVersion;
 
-  if (
-    rpcRequest.method === 'initialize'
-    || legacyVersion === LEGACY_MCP_PROTOCOL_VERSION
-    || bodyVersion === undefined
-  ) {
-    if (rpcRequest.method === 'initialize' && legacyVersion !== LEGACY_MCP_PROTOCOL_VERSION) {
+  const supportsLegacyVersion = typeof legacyVersion === 'string'
+    && LEGACY_MCP_PROTOCOL_VERSIONS.some((version) => version === legacyVersion);
+
+  if (rpcRequest.method === 'initialize' || supportsLegacyVersion || (bodyVersion === undefined && headerVersion === null)) {
+    if (rpcRequest.method === 'initialize' && !supportsLegacyVersion) {
       return errorResponse(id, {
         code: -32602,
         message: 'Unsupported legacy protocol version',
-        data: { supportedVersions: [MCP_PROTOCOL_VERSION, LEGACY_MCP_PROTOCOL_VERSION] },
+        data: {
+          supportedVersions: [MCP_PROTOCOL_VERSION, ...LEGACY_MCP_PROTOCOL_VERSIONS],
+          requestedVersion: legacyVersion ?? null,
+        },
       });
     }
     rpcRequest.era = 'legacy';
+    rpcRequest.protocolVersion = supportsLegacyVersion
+      ? legacyVersion
+      : LEGACY_MCP_PROTOCOL_VERSION;
     return rpcRequest;
   }
 
@@ -176,7 +188,7 @@ export function validateMcpRequest(request: Request, body: unknown): JsonRpcRequ
         code: -32022,
         message: 'Unsupported protocol version',
         data: {
-          supportedVersions: [MCP_PROTOCOL_VERSION, LEGACY_MCP_PROTOCOL_VERSION],
+          supportedVersions: [MCP_PROTOCOL_VERSION, ...LEGACY_MCP_PROTOCOL_VERSIONS],
           requestedVersion: bodyVersion ?? null,
         },
       },
@@ -200,7 +212,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<Respons
   switch (request.method) {
     case 'initialize':
       return result(request.id, {
-        protocolVersion: LEGACY_MCP_PROTOCOL_VERSION,
+        protocolVersion: request.protocolVersion,
         capabilities: {
           tools: {},
           resources: {},
@@ -221,7 +233,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<Respons
     case 'server/discover':
       return result(request.id, {
         resultType: 'complete',
-        supportedVersions: [MCP_PROTOCOL_VERSION, LEGACY_MCP_PROTOCOL_VERSION],
+        supportedVersions: [MCP_PROTOCOL_VERSION, ...LEGACY_MCP_PROTOCOL_VERSIONS],
         capabilities: {
           tools: {},
           resources: {},
