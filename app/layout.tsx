@@ -24,7 +24,13 @@ export const metadata: Metadata = {
     title: "Antminer",
   },
   icons: {
-    icon: "/antminer-icon.svg",
+    icon: [
+      { url: "/icons/antminer-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/antminer-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/icons/antminer-apple-touch.png", type: "image/png", sizes: "180x180" },
+    ],
   },
 };
 

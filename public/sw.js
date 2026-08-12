@@ -17,8 +17,8 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(self.registration.showNotification(payload.title, {
     body: payload.body,
-    icon: '/antminer-icon.svg',
-    badge: '/antminer-icon.svg',
+    icon: '/icons/antminer-192.png',
+    badge: '/icons/antminer-192.png',
     tag: payload.tag,
     renotify: true,
     requireInteraction: payload.tag === 'antminer-status',
