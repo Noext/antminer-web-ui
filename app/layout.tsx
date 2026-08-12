@@ -16,7 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Antminer Dashboard",
   description: "Surveillance en temps réel de votre Antminer",
-  manifest: "/manifest.webmanifest",
   applicationName: "Antminer Dashboard",
   appleWebApp: {
     capable: true,
@@ -45,6 +44,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
