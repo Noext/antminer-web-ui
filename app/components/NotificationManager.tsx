@@ -60,8 +60,10 @@ export function NotificationManager() {
       }
 
       const configResponse = await fetch('/api/push/config', { cache: 'no-store' });
-      if (!configResponse.ok) throw new Error('Notifications non configurées sur le serveur');
-      const config = await configResponse.json() as { publicKey: string };
+      const config = await configResponse.json() as { publicKey?: string; error?: string };
+      if (!configResponse.ok || !config.publicKey) {
+        throw new Error(config.error || 'Notifications non configurées sur le serveur');
+      }
       const registration = await getRegistration();
       const existing = await registration.pushManager.getSubscription();
       const subscription = existing || await registration.pushManager.subscribe({
@@ -74,7 +76,10 @@ export function NotificationManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(subscription),
       });
-      if (!response.ok) throw new Error('Enregistrement de cet appareil impossible');
+      const result = await response.json() as { ok?: boolean; error?: string };
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'Enregistrement de cet appareil impossible');
+      }
 
       setState('enabled');
       setMessage('Alertes actives. Une notification de confirmation vient d’être envoyée.');

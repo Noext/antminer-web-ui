@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isRequestOriginAllowed } from '@/lib/http/origin';
 import { readMonitorState } from '@/lib/monitor/miner-monitor';
 import { removeSubscription, saveSubscription } from '@/lib/push/subscription-store';
 import type { StoredPushSubscription } from '@/lib/push/types';
 import { sendPush } from '@/lib/push/web-push';
 
 export const runtime = 'nodejs';
-
-function isSameOrigin(request: NextRequest): boolean {
-  const origin = request.headers.get('origin');
-  return !origin || origin === request.nextUrl.origin;
-}
 
 function parseSubscription(value: unknown, userAgent: string | null): StoredPushSubscription | null {
   if (!value || typeof value !== 'object') return null;
@@ -33,7 +29,7 @@ function parseSubscription(value: unknown, userAgent: string | null): StoredPush
 }
 
 export async function POST(request: NextRequest) {
-  if (!isSameOrigin(request)) {
+  if (!isRequestOriginAllowed(request.headers, request.nextUrl.origin)) {
     return NextResponse.json({ error: 'Origine refusée' }, { status: 403 });
   }
 
@@ -57,7 +53,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  if (!isSameOrigin(request)) {
+  if (!isRequestOriginAllowed(request.headers, request.nextUrl.origin)) {
     return NextResponse.json({ error: 'Origine refusée' }, { status: 403 });
   }
 
